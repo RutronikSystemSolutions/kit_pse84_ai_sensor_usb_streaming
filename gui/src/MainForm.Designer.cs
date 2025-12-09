@@ -45,18 +45,22 @@
             dataLoggerPathTextBox = new TextBox();
             label1 = new Label();
             dataLoggerTabControl = new TabControl();
+            mainMenuStrip = new MenuStrip();
+            optionsToolStripMenuItem = new ToolStripMenuItem();
+            flipVerticalyToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)ov7675PictureBox).BeginInit();
             dataLoggerTabPage.SuspendLayout();
             dataLoggerTabControl.SuspendLayout();
+            mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // ov7675PictureBox
             // 
             ov7675PictureBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             ov7675PictureBox.BorderStyle = BorderStyle.FixedSingle;
-            ov7675PictureBox.Location = new Point(12, 46);
+            ov7675PictureBox.Location = new Point(12, 65);
             ov7675PictureBox.Name = "ov7675PictureBox";
-            ov7675PictureBox.Size = new Size(320, 511);
+            ov7675PictureBox.Size = new Size(320, 492);
             ov7675PictureBox.TabIndex = 2;
             ov7675PictureBox.TabStop = false;
             // 
@@ -64,15 +68,15 @@
             // 
             rawRadarSignalsView.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             rawRadarSignalsView.BorderStyle = BorderStyle.FixedSingle;
-            rawRadarSignalsView.Location = new Point(338, 46);
+            rawRadarSignalsView.Location = new Point(338, 65);
             rawRadarSignalsView.Name = "rawRadarSignalsView";
-            rawRadarSignalsView.Size = new Size(680, 511);
+            rawRadarSignalsView.Size = new Size(680, 492);
             rawRadarSignalsView.TabIndex = 4;
             // 
             // comPortLabel
             // 
             comPortLabel.AutoSize = true;
-            comPortLabel.Location = new Point(12, 15);
+            comPortLabel.Location = new Point(12, 34);
             comPortLabel.Name = "comPortLabel";
             comPortLabel.Size = new Size(77, 20);
             comPortLabel.TabIndex = 5;
@@ -81,14 +85,14 @@
             // comPortComboBox
             // 
             comPortComboBox.FormattingEnabled = true;
-            comPortComboBox.Location = new Point(95, 12);
+            comPortComboBox.Location = new Point(95, 31);
             comPortComboBox.Name = "comPortComboBox";
             comPortComboBox.Size = new Size(151, 28);
             comPortComboBox.TabIndex = 6;
             // 
             // connectButton
             // 
-            connectButton.Location = new Point(252, 11);
+            connectButton.Location = new Point(252, 30);
             connectButton.Name = "connectButton";
             connectButton.Size = new Size(94, 29);
             connectButton.TabIndex = 7;
@@ -99,7 +103,7 @@
             // disconnectButton
             // 
             disconnectButton.Enabled = false;
-            disconnectButton.Location = new Point(352, 11);
+            disconnectButton.Location = new Point(352, 30);
             disconnectButton.Name = "disconnectButton";
             disconnectButton.Size = new Size(94, 29);
             disconnectButton.TabIndex = 8;
@@ -109,7 +113,7 @@
             // 
             // statusTextBox
             // 
-            statusTextBox.Location = new Point(452, 12);
+            statusTextBox.Location = new Point(452, 31);
             statusTextBox.Name = "statusTextBox";
             statusTextBox.ReadOnly = true;
             statusTextBox.Size = new Size(125, 27);
@@ -210,6 +214,31 @@
             dataLoggerTabControl.Size = new Size(1002, 155);
             dataLoggerTabControl.TabIndex = 10;
             // 
+            // mainMenuStrip
+            // 
+            mainMenuStrip.BackColor = Color.FromArgb(255, 128, 255);
+            mainMenuStrip.ImageScalingSize = new Size(20, 20);
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { optionsToolStripMenuItem });
+            mainMenuStrip.Location = new Point(0, 0);
+            mainMenuStrip.Name = "mainMenuStrip";
+            mainMenuStrip.Size = new Size(1026, 28);
+            mainMenuStrip.TabIndex = 11;
+            mainMenuStrip.Text = "menuStrip1";
+            // 
+            // optionsToolStripMenuItem
+            // 
+            optionsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { flipVerticalyToolStripMenuItem });
+            optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            optionsToolStripMenuItem.Size = new Size(75, 24);
+            optionsToolStripMenuItem.Text = "Options";
+            // 
+            // flipVerticalyToolStripMenuItem
+            // 
+            flipVerticalyToolStripMenuItem.Name = "flipVerticalyToolStripMenuItem";
+            flipVerticalyToolStripMenuItem.Size = new Size(224, 26);
+            flipVerticalyToolStripMenuItem.Text = "Flip vertically";
+            flipVerticalyToolStripMenuItem.Click += flipVerticalyToolStripMenuItem_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -223,7 +252,9 @@
             Controls.Add(comPortLabel);
             Controls.Add(rawRadarSignalsView);
             Controls.Add(ov7675PictureBox);
+            Controls.Add(mainMenuStrip);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MainMenuStrip = mainMenuStrip;
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Rutronik - KIT_PSE84_AI streaming";
@@ -232,6 +263,8 @@
             dataLoggerTabPage.ResumeLayout(false);
             dataLoggerTabPage.PerformLayout();
             dataLoggerTabControl.ResumeLayout(false);
+            mainMenuStrip.ResumeLayout(false);
+            mainMenuStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -253,5 +286,8 @@
         private Button dataLoggerStartButton;
         private Label storedSizeLabel;
         private TextBox storedSizeTextBox;
+        private MenuStrip mainMenuStrip;
+        private ToolStripMenuItem optionsToolStripMenuItem;
+        private ToolStripMenuItem flipVerticalyToolStripMenuItem;
     }
 }

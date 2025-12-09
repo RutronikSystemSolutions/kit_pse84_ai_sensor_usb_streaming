@@ -18,6 +18,8 @@ namespace ov7675
         // TODO dynamic
         private const int samplesPerChirp = 128;
 
+        private bool flipVertically = false;
+
         public MainForm()
         {
             InitializeComponent();
@@ -89,8 +91,11 @@ namespace ov7675
                     int g = ((p >> 5) & 0x3f) << 2;
                     int b = ((p >> 0) & 0x1f) << 3;
 
+                    int xindex = x;
+                    if (flipVertically) xindex = (width - 1) - x;
+
                     Color color = Color.FromArgb(r, g, b);
-                    bmp.SetPixel(x, y, color);
+                    bmp.SetPixel(xindex, y, color);
                 }
             }
 
@@ -222,6 +227,10 @@ namespace ov7675
             }
         }
 
-        
+        private void flipVerticalyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            flipVertically = !flipVertically;
+            flipVerticalyToolStripMenuItem.Checked = flipVertically;
+        }
     }
 }
