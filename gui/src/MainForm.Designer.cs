@@ -48,6 +48,8 @@
             mainMenuStrip = new MenuStrip();
             optionsToolStripMenuItem = new ToolStripMenuItem();
             flipVerticalyToolStripMenuItem = new ToolStripMenuItem();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            savePictureToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)ov7675PictureBox).BeginInit();
             dataLoggerTabPage.SuspendLayout();
             dataLoggerTabControl.SuspendLayout();
@@ -218,7 +220,7 @@
             // 
             mainMenuStrip.BackColor = Color.FromArgb(255, 128, 255);
             mainMenuStrip.ImageScalingSize = new Size(20, 20);
-            mainMenuStrip.Items.AddRange(new ToolStripItem[] { optionsToolStripMenuItem });
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { optionsToolStripMenuItem, fileToolStripMenuItem });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Size = new Size(1026, 28);
@@ -235,9 +237,23 @@
             // flipVerticalyToolStripMenuItem
             // 
             flipVerticalyToolStripMenuItem.Name = "flipVerticalyToolStripMenuItem";
-            flipVerticalyToolStripMenuItem.Size = new Size(224, 26);
+            flipVerticalyToolStripMenuItem.Size = new Size(179, 26);
             flipVerticalyToolStripMenuItem.Text = "Flip vertically";
             flipVerticalyToolStripMenuItem.Click += flipVerticalyToolStripMenuItem_Click;
+            // 
+            // fileToolStripMenuItem
+            // 
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { savePictureToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(46, 24);
+            fileToolStripMenuItem.Text = "File";
+            // 
+            // savePictureToolStripMenuItem
+            // 
+            savePictureToolStripMenuItem.Name = "savePictureToolStripMenuItem";
+            savePictureToolStripMenuItem.Size = new Size(224, 26);
+            savePictureToolStripMenuItem.Text = "Save picture";
+            savePictureToolStripMenuItem.Click += savePictureToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -289,5 +305,7 @@
         private MenuStrip mainMenuStrip;
         private ToolStripMenuItem optionsToolStripMenuItem;
         private ToolStripMenuItem flipVerticalyToolStripMenuItem;
+        private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem savePictureToolStripMenuItem;
     }
 }

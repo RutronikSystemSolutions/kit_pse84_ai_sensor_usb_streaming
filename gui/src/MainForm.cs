@@ -232,5 +232,18 @@ namespace ov7675
             flipVertically = !flipVertically;
             flipVerticalyToolStripMenuItem.Checked = flipVertically;
         }
+
+        private void savePictureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.FileName = "*";
+            dlg.DefaultExt = "bmp";
+            dlg.ValidateNames = true;
+            dlg.Filter = "Bitmap Image (.bmp)|*.bmp";
+
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            ov7675PictureBox.Image.Save(dlg.FileName);
+        }
     }
 }
