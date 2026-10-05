@@ -28,6 +28,7 @@
 #include "cybsp.h"
 
 #include <stdio.h>
+#include <string.h>
 
 
 /*******************************************************************************
@@ -44,8 +45,10 @@
 *******************************************************************************/
 __attribute__((section(".cy_sharedmem")))
 __attribute((used))    uint8_t line_buffer[BUFFER_COUNT][LINE_SIZE];
-static bool row_buffer_flag = false;
-static bool frame_buffer_flag = false;
+static uint8_t capture_buffer_index = 0U;
+static uint8_t write_frame_index = 0U;
+static volatile uint16_t sensor_line_count = 0U;
+static volatile uint16_t frame_row_index = 0U;
 // static uint8_t* image_frames = NULL;
 static uint8_t* image_frames_0 = NULL;
 static uint8_t* image_frames_1 = NULL;
@@ -802,7 +805,6 @@ cy_rslt_t mtb_dvp_cam_start_xclk(void)
 }
 
 
-int counter_visr = 0;
 
 /*****************************************************************************
 * Function Name: mtb_dvp_cam_intr_callback
@@ -811,22 +813,37 @@ void mtb_dvp_cam_intr_callback(void)
 {
     if (Cy_GPIO_GetInterruptStatus(CYBSP_DVP_CAM_HREF_PORT, CYBSP_DVP_CAM_HREF_NUM))
     {
+        uint8_t completed_buffer_index = capture_buffer_index;
+        uint8_t next_capture_buffer_index = (uint8_t)(capture_buffer_index ^ 1U);
+        uint8_t* write_frame = (write_frame_index == 0U) ? image_frames_0 : image_frames_1;
+
         Cy_GPIO_ClearInterrupt(CYBSP_DVP_CAM_HREF_PORT, CYBSP_DVP_CAM_HREF_NUM);
         NVIC_ClearPendingIRQ(CYBSP_DVP_CAM_HREF_IRQ);
 
+        if ((sensor_line_count & 1U) == 0U)
+        {
+            if ((frame_row_index < OV7675_FRAME_HEIGHT) && (write_frame != NULL))
+            {
+                memcpy(&write_frame[(uint32_t)frame_row_index * LINE_SIZE],
+                       line_buffer[completed_buffer_index],
+                       LINE_SIZE);
+                frame_row_index++;
+            }
+        }
+        sensor_line_count++;
+
         Cy_DMA_Descriptor_SetDstAddress(&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
-                                        (uint8_t*)line_buffer[row_buffer_flag]);
+                                        (uint8_t*)line_buffer[next_capture_buffer_index]);
         #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT != 0)
-        SCB_InvalidateDCache_by_Addr((uint32_t*)line_buffer[row_buffer_flag],
-                                     sizeof(line_buffer[row_buffer_flag]));
+        SCB_InvalidateDCache_by_Addr((uint32_t*)line_buffer[next_capture_buffer_index],
+                                     sizeof(line_buffer[next_capture_buffer_index]));
         SCB_CleanDCache_by_Addr((uint32_t*)&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
                                 sizeof(CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0));
         #endif
         Cy_DMA_Channel_Enable(CYBSP_DMA_DVP_CAM_CONTROLLER_HW,
                               CYBSP_DMA_DVP_CAM_CONTROLLER_CHANNEL);
 
-        row_buffer_flag = !row_buffer_flag;
-		counter_visr ++;
+        capture_buffer_index = next_capture_buffer_index;
     }
 
     if (Cy_GPIO_GetInterruptStatus(CYBSP_DVP_CAM_VSYNC_PORT, CYBSP_DVP_CAM_VSYNC_NUM))
@@ -834,28 +851,33 @@ void mtb_dvp_cam_intr_callback(void)
         Cy_GPIO_ClearInterrupt(CYBSP_DVP_CAM_VSYNC_PORT, CYBSP_DVP_CAM_VSYNC_NUM);
         NVIC_ClearPendingIRQ(CYBSP_DVP_CAM_VSYNC_IRQ);
 
-		uint32_t * dest = (uint32_t*)image_frames_0;
-		if (frame_buffer_flag) dest = (uint32_t*)image_frames_1;
+        if ((frame_row_index == OV7675_FRAME_HEIGHT) &&
+            (sensor_line_count >= OV7675_FRAME_HEIGHT))
+        {
+            *_active_frame = write_frame_index;
+            *_frame_ready = true;
+        }
 
-        Cy_AXIDMAC_Descriptor_SetDstAddress(&CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_Descriptor_0, dest);
-		
+        write_frame_index ^= 1U;
+        frame_row_index = 0U;
+        sensor_line_count = 0U;
+        capture_buffer_index = 0U;
+
+        if (write_frame_index == 0U)
+        {
+            memset(image_frames_0, 0x00, OV7675_MEMORY_BUFFER_SIZE);
+        }
+        else
+        {
+            memset(image_frames_1, 0x00, OV7675_MEMORY_BUFFER_SIZE);
+        }
+
+        Cy_DMA_Descriptor_SetDstAddress(&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
+                                        (uint8_t*)line_buffer[capture_buffer_index]);
         #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT != 0)
-        SCB_InvalidateDCache_by_Addr(dest, OV7675_MEMORY_BUFFER_SIZE);
-        SCB_CleanDCache_by_Addr((uint32_t*)&CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_Descriptor_0,
-                                sizeof(CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_Descriptor_0));
+        SCB_CleanDCache_by_Addr((uint32_t*)&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
+                                sizeof(CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0));
         #endif
-        Cy_AXIDMAC_Channel_Enable(CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_HW,
-                                  CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_CHANNEL);
-
-        frame_buffer_flag = !frame_buffer_flag;
-        *_active_frame = frame_buffer_flag;
-
-		if (counter_visr != 480) printf("Strange... %d \r\n", counter_visr);
-		else
-		{
-			*_frame_ready = true;
-		}
-		counter_visr = 0;
     }
 }
 
@@ -913,8 +935,9 @@ cy_rslt_t mtb_dvp_cam_dma_init(void)
     Cy_DMA_Descriptor_SetSrcAddress(&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
                                     (void*)&GPIO_PRT16->IN);
 
+    capture_buffer_index = 0U;
     Cy_DMA_Descriptor_SetDstAddress(&CYBSP_DMA_DVP_CAM_CONTROLLER_Descriptor_0,
-                                    line_buffer[row_buffer_flag]);
+                                    line_buffer[capture_buffer_index]);
 
     #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT != 0)
     SCB_CleanDCache_by_Addr((uint32_t*)&GPIO_PRT16->IN, sizeof(GPIO_PRT16->IN));
@@ -957,6 +980,9 @@ cy_rslt_t mtb_dvp_cam_axi_dmac_init(void)
     Cy_AXIDMAC_Descriptor_SetDstAddress(&CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_Descriptor_0,
                                         (uint32_t*)image_frames_0);
 
+    /* The frame is now assembled incrementally in the HREF interrupt path.
+     * AXIDMAC init is kept only to avoid wider project changes. */
+
     #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT != 0)
     SCB_CleanDCache_by_Addr((uint32_t*)&line_buffer, sizeof(line_buffer));
     SCB_CleanDCache_by_Addr((uint32_t*)&CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_Descriptor_0,
@@ -964,8 +990,9 @@ cy_rslt_t mtb_dvp_cam_axi_dmac_init(void)
     #endif
 
     Cy_AXIDMAC_Enable(CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_HW);
-    Cy_AXIDMAC_Channel_Enable(CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_HW,
-                              CYBSP_AXIDMAC_DVP_CAM_CONTROLLER_CHANNEL);
+    /* Keep the camera AXIDMAC channel disabled: the HREF callback assembles
+     * frames in software. Enabling this channel would allow DMA and the CPU
+     * to write to the same frame buffer during startup. */
 
     return status;
 }
@@ -981,6 +1008,10 @@ cy_rslt_t mtb_dvp_cam_ov7675_init(uint8_t* buffer_0, uint8_t* buffer_1, cy_stc_s
     // image_frames = buffer;
 	image_frames_0 = buffer_0;
 	image_frames_1 = buffer_1;
+    write_frame_index = 0U;
+    capture_buffer_index = 0U;
+    frame_row_index = 0U;
+    sensor_line_count = 0U;
     _frame_ready = _frame_ready_flag;
     _active_frame = _active_frame_flag;
 
